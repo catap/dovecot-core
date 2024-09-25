@@ -122,10 +122,20 @@
 
 #if defined(HAVE_EVP_PKEY_get_raw_private_key) && defined(NID_X25519)
 #  define HAVE_X25519
-#  define IS_XD_CURVE(nid) \
+#  ifdef NID_X448
+#    define IS_XD_CURVE(nid)						\
 	((nid) == NID_X25519 || (nid) == NID_X448)
-# define IS_ED_CURVE(nid) \
+#  else
+#    define IS_XD_CURVE(nid)						\
+	((nid) == NID_X25519)
+#  endif
+#  ifdef NID_ED448
+#    define IS_ED_CURVE(nid)							\
 	((nid) == NID_ED25519 || (nid) == NID_ED448)
+#  else
+#    define IS_ED_CURVE(nid)						\
+	((nid) == NID_ED25519)
+#  endif
 #endif
 
 #if !defined(OBJ_chacha20_poly1305) && defined(LN_chacha20_poly1305)
@@ -1571,9 +1581,13 @@ static const struct jwk_to_ssl_map_entry {
 	{ .jwk_curve = "secp256k1", .nid = NID_secp256k1 },
 #ifdef HAVE_X25519
 	{ .jwk_curve = "Ed25519", .nid = NID_ED25519 },
+#  ifdef NID_ED448
 	{ .jwk_curve = "Ed448", .nid = NID_ED448 },
+#  endif
 	{ .jwk_curve = "X25519", .nid = NID_X25519 },
+#  ifdef NID_X448
 	{ .jwk_curve = "X448", .nid = NID_X448 },
+#  endif
 #endif
 	{ .jwk_curve = NULL, .nid = 0 }
 };
@@ -3872,8 +3886,11 @@ dcrypt_openssl_sign(struct dcrypt_private_key *key, const char *algorithm,
 	}
 
 #ifdef HAVE_X25519
-	if (EVP_PKEY_base_id(key->key) == NID_ED25519 ||
-	    EVP_PKEY_base_id(key->key) == NID_ED448)
+	if (EVP_PKEY_base_id(key->key) == NID_ED25519
+#  ifdef NID_ED448
+		|| EVP_PKEY_base_id(key->key) == NID_ED448
+#  endif
+        )
 		md = NULL;
 #endif
 
@@ -3996,8 +4013,11 @@ dcrypt_openssl_verify(struct dcrypt_public_key *key, const char *algorithm,
 	}
 
 #ifdef HAVE_X25519
-	if (EVP_PKEY_base_id(key->key) == NID_ED25519 ||
-	    EVP_PKEY_base_id(key->key) == NID_ED448)
+	if (EVP_PKEY_base_id(key->key) == NID_ED25519
+#  ifdef NID_ED448
+		|| EVP_PKEY_base_id(key->key) == NID_ED448
+#  endif
+        )
 		md = NULL;
 #endif
 
