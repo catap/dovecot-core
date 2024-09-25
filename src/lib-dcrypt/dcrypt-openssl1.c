@@ -138,6 +138,10 @@
 #  endif
 #endif
 
+#if defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER >= 0x4000000fL
+#  define EVP_PKEY_check(ctx) (-2)
+#endif
+
 #if !defined(OBJ_chacha20_poly1305) && defined(LN_chacha20_poly1305)
 #  define OBJ_CHACHA20_POLY1305_MISSING
 static ASN1_OBJECT *CHACHA20_POLY1305_OBJ = NULL;
