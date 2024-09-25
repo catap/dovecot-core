@@ -3619,14 +3619,16 @@ dcrypt_openssl_public_key_id_old(struct dcrypt_public_key *key,
 	}
 
 	int nid = EVP_PKEY_base_id(pub);
-	char *pub_pt_hex = NULL;
+	const char *pub_pt_hex = NULL;
+	char *pub_pt_hex_free = NULL;
 
 #ifdef HAVE_X25519
 	if (IS_XD_CURVE(nid)) {
 		unsigned char buf[128];
 		size_t len = sizeof(buf);
 		EVP_PKEY_get_raw_public_key(pub, buf, &len);
-		pub_pt_hex = OPENSSL_buf2hexstr(buf, len);
+		pub_pt_hex = pub_pt_hex_free =
+			binary_to_hex_ucase(buf, len);
 	} else
 #endif
 		if (nid == EVP_PKEY_EC) {
@@ -3641,7 +3643,10 @@ dcrypt_openssl_public_key_id_old(struct dcrypt_public_key *key,
 	/* digest this */
 	SHA256((const unsigned char*)pub_pt_hex, strlen(pub_pt_hex), buf);
 	buffer_append(result, buf, SHA256_DIGEST_LENGTH);
-	OPENSSL_free(pub_pt_hex);
+
+	/* XD curve uses binary_to_hex_ucase, no OPENSSL_free */
+	if (!IS_XD_CURVE(nid))
+		OPENSSL_free(pub_pt_hex);
 	return TRUE;
 }
 
@@ -3659,14 +3664,16 @@ dcrypt_openssl_private_key_id_old(struct dcrypt_private_key *key,
 	}
 
 	int nid = EVP_PKEY_base_id(priv);
-	char *pub_pt_hex = NULL;
+	const char *pub_pt_hex = NULL;
+	char *pub_pt_hex_free = NULL;
 
 #ifdef HAVE_X25519
 	if (IS_XD_CURVE(nid)) {
 		unsigned char buf[128];
 		size_t len = sizeof(buf);
 		EVP_PKEY_get_raw_public_key(priv, buf, &len);
-		pub_pt_hex = OPENSSL_buf2hexstr(buf, len);
+		pub_pt_hex = pub_pt_hex_free =
+			binary_to_hex_ucase(buf, len);
 	} else
 #endif
 		if (nid == EVP_PKEY_EC) {
@@ -3681,7 +3688,10 @@ dcrypt_openssl_private_key_id_old(struct dcrypt_private_key *key,
 	/* digest this */
 	SHA256((const unsigned char*)pub_pt_hex, strlen(pub_pt_hex), buf);
 	buffer_append(result, buf, SHA256_DIGEST_LENGTH);
-	OPENSSL_free(pub_pt_hex);
+
+	/* XD curve uses binary_to_hex_ucase, no OPENSSL_free */
+	if (!IS_XD_CURVE(nid))
+		OPENSSL_free(pub_pt_hex_free);
 	return TRUE;
 }
 
